@@ -1,0 +1,2 @@
+# Some sort of sentiment analysis for the strings - say whether the text means the thing is good or bad in the opinion of the author
+# Add interaction score - how much reach something has. Probably use some combination of votes on it and sub commments
