@@ -65,8 +65,26 @@ def determinePostSubject(post):
     allTickers = titleTickers + descriptionTickers + commentTickers
 
     countedTickers = Counter(map(cleanStringUtility, allTickers))
-    finalTicker = (countedTickers.most_common(1))
+    finalTicker = countedTickers.most_common(1)[0][0]
     return finalTicker
+
+#Class for post data strcuture
+class Post(object):
+    subject = ""
+    score = 0
+    upvoteRatio = 0
+
+    def __init__(self, subject, score, upvoteRatio):
+        self.subject = subject
+        self.score = score
+        self.upvoteRatio = upvoteRatio
+    
+    def __str__(self):
+        return str(self.__dict__)
+
+def get_relevant_data(subject, score, upvoteRatio):
+    post = Post( subject, score, upvoteRatio)
+    return post
     
 
 
@@ -76,14 +94,19 @@ reddit = praw.Reddit(
     user_agent="My sick ass project alkdjfsodijfa"
 )
 
-allPosts = reddit.subreddit("wallstreetbets").hot(limit=2)
+allPosts = reddit.subreddit("wallstreetbets").new(limit=20)
 filteredPosts = filter(filterPosts, allPosts)
 
 
 for post in filteredPosts:
-    logAllPropertiesUtility(post)
-    # postSubject = determinePostSubject(post)
-    # print(postSubject)
+    postSubject = determinePostSubject(post)
+    postScore = post.score
+    postUpvoteRatio = post.upvote_ratio
+    
+    # Put the relevant data in an object
+    relevantPostData = get_relevant_data(postSubject, postScore, postUpvoteRatio)
+    print(relevantPostData)
+   
 
 
 
