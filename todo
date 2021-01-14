@@ -1,2 +1,9 @@
-# Some sort of sentiment analysis for the strings - say whether the text means the thing is good or bad in the opinion of the author
 # Add interaction score - how much reach something has. Probably use some combination of votes on it and sub commments
+# Find a good source for market data, can compare the hype vs where the stock is at
+# Find a some sort of charts library that can be used to make the data understandable
+
+
+# Run script
+python3 index.py
+# Install packages
+python3 -m pip
