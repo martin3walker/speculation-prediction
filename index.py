@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 from collections import *
 import pandas as pd
 import warnings
+from wallstreet import Stock, Call, Put
+import datetime
 
 # Suppress warning for beautiful soup parsing urls
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
@@ -13,6 +15,9 @@ tickers = get_tickers()
 
 # Capitalized strings that are likely not stock tickers
 notTickers = ["CEO", "DD", "RH"]
+
+#today
+today = datetime.datetime.today()
 
 # Utility function to print an object's properties
 def logAllPropertiesUtility(obj):
@@ -84,13 +89,13 @@ def determinePostSubject(post):
     return finalTicker
 
 
-
 def get_relevant_data(subject, score, upvoteRatio, title, url):
     post = [subject, score, upvoteRatio, title, url]
     return post
 
 def map_post(post):
     postSubject = determinePostSubject(post)
+
     
     # Put the relevant data in an object
     relevantPostData = get_relevant_data(postSubject, post.score, post.upvote_ratio, post.title, post.url)
@@ -98,10 +103,41 @@ def map_post(post):
 
 def group_posts(posts):
     df = pd.DataFrame(posts, columns=["subject", "score", "upvote_ratio", "title", "url"])
-    print(df)
     return df.groupby("subject").agg({"score":"sum", "upvote_ratio":"mean"}).sort_values(by="score", ascending=False)
-    
 
+# def get_out_of_money_calls(option, price):
+
+class Readable_Option(object):
+    def __init__(self,underlying_price, strike, expiration, iv):
+        self.underlying_price = underlying_price
+        self.strike = strike
+        self.expiration = expiration
+        self.iv = iv
+
+def create_readable_option(underlying_price, strike, expiration, iv):
+    option = Readable_Option(underlying_price, strike, expiration, iv)
+    return option
+    
+def get_option_data(ticker):
+    underlying_price = Stock(ticker).price
+    # option_object = Call(ticker).set_strike("30")
+    # print(option_object)
+    
+    # # possible_expirations = option_object.expirations
+    # # expiration = possible_expirations[int(len(possible_expirations)/2)]
+    # possible_strikes = option_object.strikes
+    # strike = possible_strikes[int(len(possible_strikes)/2)]
+    # option = option_object.set_strike(strike)
+
+    # readable_option = create_readable_option(underlying_price, option.strike, option.expiration, option.implied_volatility())
+    # print(readable_option)
+
+    return underlying_price
+
+    
+def add_option_data(df):
+     df['underlying_price'] = df.apply(lambda row: get_option_data(row.name), axis=1)
+     return df
 
 reddit = praw.Reddit(
     client_id="2CnK2g9kd4r-GA",
@@ -110,16 +146,20 @@ reddit = praw.Reddit(
 )
 
 #get raw posts
-allPosts = reddit.subreddit("wallstreetbets").hot(limit=250)
+allPosts = reddit.subreddit("wallstreetbets").hot(limit=100)
 #filter posts by flair
 flairFilteredPosts = filter(filterPostsByFlair, allPosts)
 #map posts down to relevant data
 mappedPosts = map(map_post, flairFilteredPosts)
 #filter posts by subject
 subjectFilteredPosts = filter(filterPostsBySubject, mappedPosts)
-
+#put the different wsb stocks into a dataframe
 groups = group_posts(subjectFilteredPosts)
-print(groups)
+#append options data
+full_data = add_option_data(groups)
+print(full_data)
+
+
 
    
 
