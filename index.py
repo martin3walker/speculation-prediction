@@ -28,7 +28,7 @@ def filterPostsByFlair(post):
 
 # Remove posts with flair that isn't interesting
 def filterPostsBySubject(post):
-    if(post.subject != "none"):
+    if(post[0] != "none"):
         return True
     else:
         return False
@@ -83,24 +83,10 @@ def determinePostSubject(post):
     finalTicker = check_for_subject(tickerArray) 
     return finalTicker
 
-#Class for post data strcuture
-class Post(object):
-    subject = ""
-    score = 0
-    upvoteRatio = 0
 
-    def __init__(self, subject, score, upvoteRatio, title, url):
-        self.subject = subject
-        self.score = score
-        self.upvoteRatio = upvoteRatio
-        # self.title = title
-        self.url = url
-    
-    def __str__(self):
-        return str(self.__dict__)
 
 def get_relevant_data(subject, score, upvoteRatio, title, url):
-    post = Post( subject, score, upvoteRatio, title, url)
+    post = [subject, score, upvoteRatio, title, url]
     return post
 
 def map_post(post):
@@ -111,8 +97,9 @@ def map_post(post):
     return relevantPostData
 
 def group_posts(posts):
-    df = pd.DataFrame(posts)
-    return df.groupby("subject")["score"].count()
+    df = pd.DataFrame(posts, columns=["subject", "score", "upvote_ratio", "title", "url"])
+    print(df)
+    return df.groupby("subject").agg({"score":"sum", "upvote_ratio":"mean"}).sort_values(by="score", ascending=False)
     
 
 
@@ -123,7 +110,7 @@ reddit = praw.Reddit(
 )
 
 #get raw posts
-allPosts = reddit.subreddit("wallstreetbets").hot(limit=30)
+allPosts = reddit.subreddit("wallstreetbets").hot(limit=250)
 #filter posts by flair
 flairFilteredPosts = filter(filterPostsByFlair, allPosts)
 #map posts down to relevant data
@@ -131,11 +118,8 @@ mappedPosts = map(map_post, flairFilteredPosts)
 #filter posts by subject
 subjectFilteredPosts = filter(filterPostsBySubject, mappedPosts)
 
-# groups = group_posts(subjectFilteredPosts)
-# print(groups)
-
-for post in subjectFilteredPosts:
-    print(post)
+groups = group_posts(subjectFilteredPosts)
+print(groups)
 
    
 
